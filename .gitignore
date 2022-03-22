@@ -1,0 +1,5 @@
+# gitignore for any csv's, ini, or xlsx
+**/*.csv
+**/*.ini
+**/*.xlsx
+**/debug.py
