@@ -3,6 +3,7 @@ import os
 from psycopg2 import sql
 import numpy as np
 from src.utils.dbconfig import db
+from src.utils.schema import schema_chooser
 from src.utils.tables import create_command
 
 def table_create(tablename: str, conn:str=None):
@@ -26,3 +27,11 @@ def table_create(tablename: str, conn:str=None):
         d = db('maindev')
         con = d.str
         cur = con.cursor()
+
+
+def to_dict(tablename):
+    sche = schema_chooser(tablename)
+    di = pd.Series(
+            sche.DataType.values,
+            index=sche.Field).to_dict()
+    return di
