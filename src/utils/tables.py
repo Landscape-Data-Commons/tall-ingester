@@ -1,31 +1,56 @@
 import pandas as pd
-from src.utils.schema import schema_chooser
-from src.utils.table_utils import table_create, to_dict
+import os
+from datetime import datetime
+import json
+import geopandas as gpd
+from pyproj import CRS
 
+import src.project.project as proj
+import src.utils.schema as stools # schema_chooser
+import src.utils.table_utils as tutils # table_create, todict
 
 def assemble(tablename):
-    """
-    function to troubleshoot ingestion issues
-
-    """
     dir = json.load(open(file=os.path.join(os.getcwd(),"src","utils","config.json")))["schema_dir"]
     tall_files = {
         os.path.splitext(i)[0]:os.path.normpath(f"{dir}/{i}") for
             i in os.listdir(dir) if not i.endswith(".xlsx")
             and not i.endswith(".ldb")}
-    # tempdf = pd.read_csv(tall_files[tablename], encoding="cp1252", low_memory=False)
+    if "tblProject" in tablename:
+        return proj.read_template()
+
+
+
+    # FOR JOE: csv encoding
     enc = 'utf-8' if 'dataSoilStability' in tablename else 'cp1252'
+
+    # pulling schemas from xlsx and using them to readcsv
+    scheme = tutils.todict(tablename)
+    translated = pg2pandas(scheme)
     tempdf = pd.read_csv(
 
         tall_files[tablename],
         encoding=enc,
         low_memory=False,
-        index_col=0
+        index_col=0,
+        dtype = translated,
+        parse_dates = date_finder(scheme)
 
         )
+    # adding date loaded in db
+    tempdf = dateloaded(tempdf)
+
+    # adding projectkey value
+    if "tblProject" not in tablename:
+        prj = proj.read_template()
+        project_key = prj.loc[0,"project_key"]
+        tempdf.ProjectKey = project_key
+
     if "dataHeader" in tablename:
+        schema = tutils.todict(tablename).keys()
         tempdf.rename(columns={"EcologicalSiteId": "EcologicalSiteID"}, inplace=True)
+        tempdf = tempdf.filter(schema)
         tempdf = tempdf.drop_duplicates()
+        tempdf = geoenable(tempdf)
 
     if "dataLPI" in tablename:
         lpi = ['NML00000_2019_Sandy_5012019-09-01',
@@ -37,16 +62,16 @@ def assemble(tablename):
                  'MT_DFO-Watershed-2020_GH-40-S_V12020-09-01',
                  'MT_DFO-Watershed-2020_GH-23-S_V12020-09-01']
         tempdf.drop(columns=["X"], inplace=True)
-        schema = to_dict(tablename).keys()
+        schema = tutils.todict(tablename).keys()
         tempdf = tempdf.filter(schema)
         tempdf = tempdf.drop_duplicates()
 
 
     if "dataGap" in tablename:
-        integers = ["SeqNo", "GapStart", "GapEnd", "Gap", "Measure", "LineLengthAmount",
-        "GapData", "PerennialsCanopy","AnnualGrassesCanopy", "AnnualForbsCanopy", "OtherCanopy",
-        "NoCanopyGaps","NoBasalGaps", "PerennialsBasal", "AnnualGrassesBasal", "AnnualForbsBasal",
-        "OtherBasal"]
+        # integers = ["SeqNo", "GapStart", "GapEnd", "Gap", "Measure", "LineLengthAmount",
+        # "GapData", "PerennialsCanopy","AnnualGrassesCanopy", "AnnualForbsCanopy", "OtherCanopy",
+        # "NoCanopyGaps","NoBasalGaps", "PerennialsBasal", "AnnualGrassesBasal", "AnnualForbsBasal",
+        # "OtherBasal"]
 
         header =    ['17071207510493982017-09-01',
                      '17071912364675632017-09-01',
@@ -64,25 +89,66 @@ def assemble(tablename):
 
 
         tempdf = tempdf.drop_duplicates()
-        schema = to_dict(tablename).keys()
+        schema = tutils.todict(tablename).keys()
         tempdf = tempdf.filter(schema)
 
-        for i in integers:
-            tempdf[i] = tempdf[i].apply(lambda x: pd.NA if pd.isnull(x)==True else x).astype('Int64')
+        # for i in integers:
+        #     tempdf[i] = tempdf[i].apply(lambda x: pd.NA if pd.isnull(x)==True else x).astype('Int64')
         tempdf  = tempdf[~tempdf.PrimaryKey.isin(header)]
 
     if "dataHeight" in tablename:
-        integers = [ "Measure", "LineLengthAmount", 'PointNbr' , 'Chkbox','ShowCheckbox']
+        # integers = [ "Measure", "LineLengthAmount", 'PointNbr' , 'Chkbox','ShowCheckbox']
         height = ['17071912364675632017-09-01']
 
-        schema = to_dict(tablename).keys()
+        schema = tutils.todict(tablename).keys()
         tempdf = tempdf.filter(schema)
         tempdf = tempdf.drop_duplicates()
-        for i in integers:
-            tempdf[i] = tempdf[i].apply(lambda x: pd.NA if pd.isnull(x)==True else x).astype('Int64')
+        # for i in integers:
+        #     tempdf[i] = tempdf[i].apply(lambda x: pd.NA if pd.isnull(x)==True else x).astype('Int64')
         tempdf  = tempdf[~tempdf.PrimaryKey.isin(height)]
 
     return tempdf
+
+def geoenable(df):
+    df.drop(columns=["wkb_geometry"], inplace=True)
+    tempdf = gpd.GeoDataFrame(df,
+                crs =CRS("EPSG:4326"),
+                geometry=gpd.points_from_xy(
+                    df.Longitude_NAD83,
+                    df.Latitude_NAD83
+                    ))
+    tempdf.rename(columns={'geometry':'wkb_geometry'}, inplace=True)
+    return tempdf
+
+
+def dateloaded(df):
+    """ appends DateLoadedInDB and dbkey to the dataframe
+    """
+    if 'DateLoadedInDb' in df.columns:
+        df['DateLoadedInDb'] = df['DateLoadedInDb'].astype('datetime64')
+        df['DateLoadedInDb'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    else:
+        df['DateLoadedInDb'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    return df
+
+def pg2pandas(pg_schema):
+    trans = {
+        "text":"object",
+        "integer":"Int64",
+        "bigint":"Int64",
+        "bit":"Int64",
+        "smallint":"Int64",
+        "double precision":"float64",
+        "postgis.geometry":"object",
+        "date":"str", #important
+        "timestamp":"str" #important,
+    }
+    return {k:trans[v.lower()] for k,v in pg_schema.items()}
+
+def date_finder(trans):
+    return [k for k,v in trans.items() if
+        ('date' in trans[k].lower()) or
+        ('timestamp' in trans[k].lower())]
 
 def create_command(tablename):
     """
@@ -105,7 +171,20 @@ def create_command(tablename):
         str = nonheader_fix(str)
         str = rid_adder(str)
 
+    elif "LPI" in tablename:
+        str = nonheader_fix(str)
+        str = rid_adder(str)
+
+    # elif "Project" in tablename:
+    #     str = project_fix(str)
+    #     str = rid_adder(str)
+
     return str
+
+def set_srid():
+    return r"""ALTER TABLE public_dev."dataHeader"
+                ALTER COLUMN wkb_geometry TYPE postgis.geometry(Point, 4326)
+                USING postgis.ST_SetSRID(wkb_geometry,4326);"""
 
 def field_appender(tablename):
     """
@@ -116,8 +195,8 @@ def field_appender(tablename):
     str = "( "
     count = 0
     di = pd.Series(
-            schema_chooser(tablename).DataType.values,
-            index=schema_chooser(tablename).Field).to_dict()
+            stools.schema_chooser(tablename).DataType.values,
+            index= stools.schema_chooser(tablename).Field).to_dict()
 
     for k,v in di.items():
         if count<(len(di.items())-1):
@@ -135,7 +214,7 @@ def header_fix(str):
     """
 
     fix = str.replace('"PrimaryKey" TEXT,', '"PrimaryKey" TEXT PRIMARY KEY,')
-    fix = fix.replace('POSTGIS.GEOMETRY,', 'postgis.GEOMETRY,')
+    fix = fix.replace('POSTGIS.GEOMETRY,', 'postgis.GEOMETRY(POINT, 4326),')
     return fix
 
 def nonheader_fix(str):
@@ -145,6 +224,13 @@ def nonheader_fix(str):
 
     fix = str.replace('"PrimaryKey" TEXT,', '"PrimaryKey" TEXT REFERENCES gisdb.public_dev."dataHeader"("PrimaryKey"), ')
     return fix
+
+def project_fix(str):
+    """
+    adds foreign key contraint
+    """
+
+    fix = str.replace('"ProjectKey" TEXT,', '"ProjectKey" TEXT REFERENCES gisdb.public_dev."dataHeader"("ProjectKey"), ')
 
 def rid_adder(str):
     """
