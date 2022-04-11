@@ -31,7 +31,7 @@ def assemble(tablename):
         tall_files[tablename],
         encoding=enc,
         low_memory=False,
-        index_col=0,
+        # index_col=0,
         dtype = translated,
         parse_dates = date_finder(scheme)
 
@@ -61,19 +61,22 @@ def assemble(tablename):
                  'UT_SLFO-ESR-Random-SHINY-2019_SP-3_V12020-09-01',
                  'MT_DFO-Watershed-2020_GH-40-S_V12020-09-01',
                  'MT_DFO-Watershed-2020_GH-23-S_V12020-09-01']
-        tempdf.drop(columns=["X"], inplace=True)
+        # tempdf.drop(columns=["X"], inplace=True)
         schema = tutils.todict(tablename).keys()
         tempdf = tempdf.filter(schema)
         tempdf = tempdf.drop_duplicates()
+        tempdf  = tempdf[~tempdf.PrimaryKey.isin(lpi)]
+
 
 
     if "dataGap" in tablename:
+        # pass
         # integers = ["SeqNo", "GapStart", "GapEnd", "Gap", "Measure", "LineLengthAmount",
         # "GapData", "PerennialsCanopy","AnnualGrassesCanopy", "AnnualForbsCanopy", "OtherCanopy",
         # "NoCanopyGaps","NoBasalGaps", "PerennialsBasal", "AnnualGrassesBasal", "AnnualForbsBasal",
         # "OtherBasal"]
 
-        header =    ['17071207510493982017-09-01',
+        gap =    ['17071207510493982017-09-01',
                      '17071912364675632017-09-01',
                      '17081815533768722017-09-01',
                      '15082015083892752016-09-01',
@@ -85,16 +88,16 @@ def assemble(tablename):
                      'UT_SLFO-ESR-Random-SHINY-2019_SP-3_V12020-09-01',
                      'MT_DFO-Watershed-2020_GH-40-S_V12020-09-01',
                      'MT_DFO-Watershed-2020_GH-23-S_V12020-09-01']
-
-
-
+        #
+        #
+        #
         tempdf = tempdf.drop_duplicates()
         schema = tutils.todict(tablename).keys()
         tempdf = tempdf.filter(schema)
-
-        # for i in integers:
-        #     tempdf[i] = tempdf[i].apply(lambda x: pd.NA if pd.isnull(x)==True else x).astype('Int64')
-        tempdf  = tempdf[~tempdf.PrimaryKey.isin(header)]
+        #
+        # # for i in integers:
+        # #     tempdf[i] = tempdf[i].apply(lambda x: pd.NA if pd.isnull(x)==True else x).astype('Int64')
+        tempdf  = tempdf[~tempdf.PrimaryKey.isin(gap)]
 
     if "dataHeight" in tablename:
         # integers = [ "Measure", "LineLengthAmount", 'PointNbr' , 'Chkbox','ShowCheckbox']
@@ -106,6 +109,118 @@ def assemble(tablename):
         # for i in integers:
         #     tempdf[i] = tempdf[i].apply(lambda x: pd.NA if pd.isnull(x)==True else x).astype('Int64')
         tempdf  = tempdf[~tempdf.PrimaryKey.isin(height)]
+
+    if "dataSoilStability" in tablename:
+        soil = ['15061107204117352015-09-10',
+             '15072117415644452015-09-10',
+             '1606231547451562016-09-01',
+             '15070115065570822015-09-10',
+             '15070817194671232015-09-10',
+             '15071516212644512015-09-10',
+             '15061109502352762015-09-10',
+             '15061109503858772015-09-10',
+             '15061012474022422015-09-10',
+             '15070116214517692015-09-10',
+             '1507201842135732015-09-10',
+             '15072118230793402015-09-10',
+             '15072307072476792015-09-10',
+             '15072308002739522015-09-10',
+             '15061109503025512015-09-10',
+             '15061109502685032015-09-10',
+             '15061109501930562015-09-10',
+             '15061806553313572015-09-10',
+             '15062508012828012015-09-10',
+             '15062509535650522015-09-10',
+             '15062510492972452015-09-10',
+             '15063017120819272015-09-10',
+             '15063018160041252015-09-10',
+             '17060911393164762017-09-01',
+             '17060612044890902017-09-01',
+             '17042608593769502017-09-01',
+             '17060115430011702017-09-01',
+             '18090209051646112018-09-01',
+             '18091708400288932018-09-01',
+             '18091710495682832018-09-01',
+             '18091713033286092018-09-01',
+             '18091714593735982018-09-01',
+             '17060506454387822018-09-01',
+             '17060606191768862018-09-01',
+             '17060616532875532018-09-01',
+             '17060809112813472018-09-01',
+             '17061209222182522018-09-01',
+             '17061308574183542018-09-01',
+             '17061416352297852018-09-01',
+             '17061910100826462018-09-01',
+             '17062609240652612018-09-01',
+             '17061508304887032018-09-01',
+             '17062209010859702018-09-01',
+             '17062614033671812018-09-01',
+             '17062109501325502018-09-01',
+             '17062709145060962018-09-01',
+             '17062112502073572018-09-01',
+             '17062712435967572018-09-01',
+             '17061410543228912018-09-01',
+             '17062010165485062018-09-01',
+             '17062908371387452018-09-01',
+             '1706201449386592018-09-01',
+             '17070509424791132018-09-01',
+             '17070715414673252018-09-01',
+             '1707110759093502018-09-01',
+             '17070608581093812018-09-01',
+             '17070613111843332018-09-01',
+             '17071916331970032018-09-01',
+             '1707111324077122018-09-01',
+             '17071214220832932018-09-01',
+             '17071311182567242018-09-01',
+             '17071714394361392018-09-01',
+             '17071710384935892018-09-01',
+             '17071811375217352018-09-01',
+             '17071911292966862018-09-01',
+             '17072010411297852018-09-01',
+             '17072412535259822018-09-01',
+             '17072410040453202018-09-01',
+             '17072510382158332018-09-01',
+             '17072512541431622018-09-01',
+             '17072710263517652018-09-01',
+             '17080312323724372018-09-01',
+             '17080111044839242018-09-01',
+             '17073110363956752018-09-01',
+             '17073113135399092018-09-01',
+             '17080714234743502018-09-01',
+             '17080709570176482018-09-01',
+             '17080811511320052018-09-01',
+             '17080911020196772018-09-01',
+             '170810101241242018-09-01',
+             '17080211315185282018-09-01',
+             '17081410200798022018-09-01',
+             '17081415205215742018-09-01',
+             'NML00000_2019_Sandy_5012019-09-01',
+             'UT_GSENM-LUP-Random-2020_Shade-693_V12020-09-01',
+             'UT_SLFO-ESR-Random-SHINY-2019_HW-2_V12020-09-01',
+             'UT_SLFO-ESR-Random-SHINY-2019_HW-3_V12020-09-01',
+             'UT_SLFO-ESR-Random-SHINY-2019_SP-3_V12020-09-01',
+             'UT_SLFO-ESR-Random-SHINY-2019_SP-2_V12020-09-01',
+             'MT_DFO-Watershed-2020_GH-40-S_V12020-09-01',
+             'MT_DFO-Watershed-2020_GH-23-S_V12020-09-01',
+             '17072812250668882018-09-01']
+        tempdf = tempdf.drop_duplicates()
+        schema = tutils.todict(tablename).keys()
+        tempdf = tempdf.filter(schema)
+        tempdf  = tempdf[~tempdf.PrimaryKey.isin(soil)]
+
+    if "dataSpeciesInventory" in tablename:
+        spec = ['UT_GSENM-LUP-Random-2020_Shade-693_V12020-09-01',
+                 'UT_SLFO-ESR-Random-SHINY-2019_HW-2_V12020-09-01',
+                 'UT_SLFO-ESR-Random-SHINY-2019_SP-2_V12020-09-01',
+                 'UT_SLFO-ESR-Random-SHINY-2019_SP-3_V12020-09-01',
+                 'UT_SLFO-ESR-Random-SHINY-2019_HW-3_V12020-09-01',
+                 'MT_DFO-Watershed-2020_GH-40-S_V12020-09-01',
+                 'MT_DFO-Watershed-2020_GH-23-S_V12020-09-01']
+
+        tempdf = tempdf.drop_duplicates()
+        schema = tutils.todict(tablename).keys()
+        tempdf = tempdf.filter(schema)
+        tempdf  = tempdf[~tempdf.PrimaryKey.isin(header)]
 
     return tempdf
 
@@ -230,7 +345,8 @@ def project_fix(str):
     adds foreign key contraint
     """
 
-    fix = str.replace('"ProjectKey" TEXT,', '"ProjectKey" TEXT REFERENCES gisdb.public_dev."dataHeader"("ProjectKey"), ')
+    fix = str.replace('"ProjectKey" TEXT, ', '"ProjectKey" TEXT REFERENCES gisdb.public_dev."dataHeader"("ProjectKey"), ')
+    return fix
 
 def rid_adder(str):
     """
