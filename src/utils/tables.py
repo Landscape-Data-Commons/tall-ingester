@@ -220,7 +220,17 @@ def assemble(tablename):
         tempdf = tempdf.drop_duplicates()
         schema = tutils.todict(tablename).keys()
         tempdf = tempdf.filter(schema)
-        tempdf  = tempdf[~tempdf.PrimaryKey.isin(header)]
+        tempdf  = tempdf[~tempdf.PrimaryKey.isin(spec)]
+
+    if "geoIndicators" in tablename:
+        tempdf.drop_duplicates()
+        schema = tutils.todict(tablename).keys()
+        tempdf = tempdf.filter(schema)
+
+    if "geoSpecies" in tablename:
+        tempdf.drop_duplicates()
+        schema = tutils.todict(tablename).keys()
+        tempdf = tempdf.filter(schema)
 
     return tempdf
 
@@ -290,9 +300,21 @@ def create_command(tablename):
         str = nonheader_fix(str)
         str = rid_adder(str)
 
-    # elif "Project" in tablename:
-    #     str = project_fix(str)
-    #     str = rid_adder(str)
+    elif "SoilStability" in tablename:
+        str = nonheader_fix(str)
+        str = rid_adder(str)
+
+    elif "SpeciesInventory" in tablename:
+        str = nonheader_fix(str)
+        str = rid_adder(str)
+
+    elif "Indicators" in tablename:
+        str = nonheader_fix(str)
+        str = rid_adder(str)
+
+    elif "geoSpecies" in tablename:
+        str = nonheader_fix(str)
+        str = rid_adder(str)
 
     return str
 
