@@ -19,9 +19,10 @@ class Ingester:
         self.cur = self.con.cursor()
 
     @staticmethod
-    def main_ingest( df: pd.DataFrame, table:str,
+    def main_ingest( df: pd.DataFrame,
+                    table:str,
                     connection: psycopg2.extensions.connection,
-                    chunk_size:int = 10000):
+                    chunk_size:int = 100000):
         """needs a table first"""
 
         df = df.copy()

@@ -1,7 +1,6 @@
 from configparser import ConfigParser
 from psycopg2.pool import SimpleConnectionPool
 
-
 def config(filename='src/utils/database.ini', section='maindev'):
     """
     Uses the configpaser module to read .ini and return a dictionary of
@@ -39,7 +38,11 @@ class db:
                 self.str_1 = SimpleConnectionPool(minconn=1,maxconn=10,**self.params)
                 self.str = self.str_1.getconn()
 
-
+            elif "gis" in keyword:
+                self.params = config(section='postgresql')
+                self.params['options'] = "-c search_path=gis"
+                self.str_1 = SimpleConnectionPool(minconn=1,maxconn=10,**self.params)
+                self.str = self.str_1.getconn()
             else:
                 self.params = config(section=f'{keyword}')
                 self.params['options'] = "-c search_path=public"

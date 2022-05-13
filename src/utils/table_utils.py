@@ -37,7 +37,7 @@ def tablecheck(tablename, conn="maindev"):
     """
     tableschema = "public_dev" if conn=="maindev" else "public"
     try:
-        d = db(f'{conn}')
+        d = dbc.db(f'{conn}')
         con = d.str
         cur = con.cursor()
         cur.execute("select exists(select * from information_schema.tables where table_name=%s and table_schema=%s)", (f'{tablename}',f'{tableschema}',))
@@ -48,7 +48,7 @@ def tablecheck(tablename, conn="maindev"):
 
     except Exception as e:
         print(e)
-        d = db(f'{conn}')
+        d = dbc.db(f'{conn}')
         con = d.str
         cur = con.cursor()
 

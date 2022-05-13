@@ -77,6 +77,7 @@ def read_template():
     dir = json.load(open(file=os.path.join(os.getcwd(),"src","utils","config.json")))["projects_dir"]
     maindf = template()
     maindf.drop(maindf.index,inplace=True)
+    data = None
     for path in os.listdir(dir):
         if os.path.splitext(path)[1]==".xlsx":
             df = pd.read_excel(os.path.join(dir,path))
@@ -87,7 +88,8 @@ def read_template():
             pass
         else:
             print("No metadata '.xlsx'(excel) file found within directory. Please provide project metadata file.")
-    maindf.loc[len(maindf),:] = data
+    if data!=None:
+        maindf.loc[len(maindf),:] = data
     return maindf
 
 

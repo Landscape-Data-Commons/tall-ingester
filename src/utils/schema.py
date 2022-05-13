@@ -1,12 +1,13 @@
 import pandas as pd
 import os
+import json
 # parse types per table
 # schema_chooser("aero_runs")
 
 
 def schema_chooser(tablename):
     #  PATH TO EXCEL FILE WITH SCHEMA
-    schema_dir = r"C:\Users\kbonefont\Documents\GitHub\tall-ingester\src\schemas"
+    schema_dir = dir = json.load(open(file=os.path.normpath(os.path.join(os.getcwd(),"src","utils","config.json") )))["schema_dir"]
 
     # SCHEMA PATH LOADER
     schema_file = [
