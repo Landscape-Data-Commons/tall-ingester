@@ -26,7 +26,7 @@ def config(filename='src/utils/database.ini', section='maindev'):
     return db
 
 class db:
-    def __init__(self, keyword = 'maindev'):
+    def __init__(self, keyword = 'newtall'):
         if keyword == None:
             self.params = config()
             self.str_1 = SimpleConnectionPool(minconn=1,maxconn=10,**self.params)
@@ -43,6 +43,13 @@ class db:
                 self.params['options'] = "-c search_path=gis"
                 self.str_1 = SimpleConnectionPool(minconn=1,maxconn=10,**self.params)
                 self.str = self.str_1.getconn()
+
+            elif "newtall" in keyword:
+                self.params = config(section='newtall')
+                self.params['options'] = "-c search_path=public_test"
+                self.str_1 = SimpleConnectionPool(minconn=1,maxconn=10,**self.params)
+                self.str = self.str_1.getconn()
+
             else:
                 self.params = config(section=f'{keyword}')
                 self.params['options'] = "-c search_path=public"

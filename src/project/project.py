@@ -96,9 +96,6 @@ def read_template():
 def update_project(path_in_batch,projectkey, database=None):
     """ ingests a project metadata file if project key does not exist.
 
-    - would be better if it would automatically pull projectkey from
-    the excel file is handling to check
-    - projectkey is made up of what?
     - creates datafrmae from excel metadata table
     - adds projectkey field
     - ingests/updates project table in pg

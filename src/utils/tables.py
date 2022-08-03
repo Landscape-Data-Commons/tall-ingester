@@ -139,6 +139,7 @@ def pg2pandas(pg_schema):
         "bit":"Int64",
         "smallint":"Int64",
         "double precision":"float64",
+        "numeric":"float64",
         "postgis.geometry":"object",
         "date":"str", #important
         "timestamp":"str" #important,
@@ -191,10 +192,14 @@ def create_command(tablename):
         str = nonheader_fix(str)
         str = rid_adder(str)
 
+    elif "Project" in tablename:
+        str = project_fix(str)
+        # str = rid_adder(str)
+
     return str
 
 def set_srid():
-    return r"""ALTER TABLE public_dev."dataHeader"
+    return r"""ALTER TABLE public_test."dataHeader"
                 ALTER COLUMN wkb_geometry TYPE postgis.geometry(Point, 4326)
                 USING postgis.ST_SetSRID(wkb_geometry,4326);"""
 
@@ -234,15 +239,18 @@ def nonheader_fix(str):
     adds foreign key constraint
     """
 
-    fix = str.replace('"PrimaryKey" TEXT,', '"PrimaryKey" TEXT REFERENCES gisdb.public_dev."dataHeader"("PrimaryKey"), ')
+    fix = str.replace('"PrimaryKey" TEXT,', '"PrimaryKey" TEXT REFERENCES gisdb.public_test."dataHeader"("PrimaryKey"), ')
     return fix
+
+
 
 def project_fix(str):
     """
     adds foreign key contraint
     """
+    # fix = str.replace('"PrimaryKey" TEXT,', '"PrimaryKey" TEXT PRIMARY KEY,')
+    fix = str.replace('"ProjectKey" TEXT, ', '"ProjectKey" TEXT PRIMARY KEY REFERENCES gisdb.public_test."dataHeader"("ProjectKey"), ')
 
-    fix = str.replace('"ProjectKey" TEXT, ', '"ProjectKey" TEXT REFERENCES gisdb.public_dev."dataHeader"("ProjectKey"), ')
     return fix
 
 def rid_adder(str):

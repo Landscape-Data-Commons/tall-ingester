@@ -11,12 +11,12 @@ def table_create(tablename: str, conn:str=None):
     pulls all fields from dataframe and constructs a postgres table schema;
     using that schema, create new table in postgres.
     """
-    d = dbc.db('maindev')
+    # d = dbc.db('maindev')
 
     try:
         print("checking fields")
         comm = tables.create_command(tablename)
-        con = d.str
+        con = conn
         cur = con.cursor()
         # return comm
         cur.execute(comm)
@@ -25,17 +25,17 @@ def table_create(tablename: str, conn:str=None):
 
     except Exception as e:
         print(e)
-        d = dbc.db('maindev')
-        con = d.str
+        # d = dbc.db('maindev')
+        con = conn
         cur = con.cursor()
 
-def tablecheck(tablename, conn="maindev"):
+def tablecheck(tablename, conn="newtall"):
     """
     receives a tablename and returns true if table exists in postgres table
     schema, else returns false
 
     """
-    tableschema = "public_dev" if conn=="maindev" else "public"
+    tableschema = "public_test" if conn=="newtall" else "public"
     try:
         d = dbc.db(f'{conn}')
         con = d.str
@@ -52,15 +52,21 @@ def tablecheck(tablename, conn="maindev"):
         con = d.str
         cur = con.cursor()
 
-def todict(tablename):
-    sche = stools.schema_chooser(tablename)
-    di = pd.Series(
-            sche.DataType.values,
-            index=sche.Field).to_dict()
-    return di
+def todict(tablename, length=None, which=0):
+    sche = stools.schema_chooser(tablename,which)
+    if length and length==True:
+        di = pd.Series(
+                sche.Length.values,
+                index=sche.Field).to_dict()
+        return di
+    else:
+        di = pd.Series(
+                sche.DataType.values,
+                index=sche.Field).to_dict()
+        return di
 
 
-def geoind_postingest(conn="maindev"):
+def geoind_postingest(conn="newtall"):
     """
     fixes geoindicators after it has been ingested
 
@@ -124,7 +130,7 @@ def geoind_postingest(conn="maindev"):
                         where target."PrimaryKey" = src."PrimaryKey";"""
     try:
         d = dbc.db(f'{conn}')
-        constring = engine_conn_string('maindev')
+        constring = engine_conn_string('newtall')
 
         con = d.str
         if tablecheck("geoIndicators"): # table exists
@@ -160,5 +166,66 @@ def geoind_postingest(conn="maindev"):
     except Exception as e:
         print(e)
         d = dbc.db(f'{conn}')
+        con = d.str
+        cur = con.cursor()
+
+
+
+
+def tableComparison():
+    """
+    compares a schema file to all the tables up in a postgres instance.
+
+    todo: could use schema/db choosing logic
+    args:
+    none
+    """
+    results = {}
+    tablelist = [
+        "dataHeader",
+        "dataGap",
+        "dataHeight",
+        "dataLPI",
+        "dataSoilStability",
+        "dataSpeciesInventory",
+        "geoIndicators",
+        "geoSpecies",
+        "tblProject"
+    ]
+
+    for table in tablelist:
+        sch_pg ="sch_missing_in_pg"
+        pg_sch = "pg_missing_in_sch"
+
+        schema2compare = tutils.todict(table)
+        pg_tbl = pgTableSchema(table,"newtall")
+        results[f'{table}_{sch_pg}'] = [i for i in schema2compare.keys() if i not in pg_tbl.keys()]
+        results[f'{table}_{pg_sch}'] = [i for i in pg_tbl.keys() if i not in schema2compare.keys()]
+    return results
+
+
+def pgTableSchema(tablename, conn):
+    """
+    pulls the schema of a table in postgres, renders it in a dictionary
+
+    args:
+    tablename:str ->  name of table
+    conn:str -> name of section in database.ini, which db/schema to connect to
+
+    """
+    empty_dict = {}
+    tableschema = "public_test" if conn=="newtall" else "public_dev"
+    try:
+        d = dbc.db(f"{conn}")
+        con = d.str
+        cur = con.cursor()
+        cur.execute("select column_name, data_type from information_schema.columns where table_name=%s and table_schema=%s;", (f'{tablename}',f'{tableschema}',))
+        tuples = cur.fetchall()
+        for i in tuples:
+            empty_dict[f'{[j for j in i][0]}']=f'{[j for j in i][1]}'
+        return empty_dict
+
+    except Exception as e:
+        d = dbc.db(f"{conn}")
         con = d.str
         cur = con.cursor()

@@ -5,17 +5,21 @@ import json
 # schema_chooser("aero_runs")
 
 
-def schema_chooser(tablename):
+def schema_chooser(tablename, which=0):
     #  PATH TO EXCEL FILE WITH SCHEMA
     schema_dir = json.load(open(file=os.path.normpath(os.path.join(os.getcwd(),"src","utils","config.json") )))["schema_dir"]
 
     # SCHEMA PATH LOADER
-    schema_file = [
+    schema_list = [
         os.path.normpath(f"{schema_dir}/{i}") for i in os.listdir(schema_dir)
         if "Schema" in i and
-        os.path.splitext(i)[1].endswith(".xlsx") and
-        "kbf" in i][0]
+        os.path.splitext(i)[1].endswith(".xlsx")]
 
+    if len(schema_list)>1:
+        print("found more than 1 schema file in schema dir;")
+        for i in schema_list:
+            print(f"pos.{schema_list.index(i)} is \"{i}\"")
+    schema_file = schema_list[which]
     # create dataframe with path
     excel_dataframe = pd.read_excel(schema_file)
     # quick table name fix
