@@ -4,3 +4,4 @@
 **/*.xlsx
 **/debug.py
 **/*.pyc
+**/*.ipynb

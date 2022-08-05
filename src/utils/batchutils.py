@@ -3,7 +3,7 @@ import src.utils.ingester as ing # Ingester
 import src.utils.dbconfig as dbc #db
 import src.utils.tables as tbl
 
-def batcher():
+def batcher(whichschema):
 
     tablelist = [
         "dataGap",
@@ -15,7 +15,23 @@ def batcher():
         "geoSpecies",
         "tblProject"
         ]
-        
+
+    if whichschema:
+        if "newtall" in whichschema:
+            targetschema = "public_test"
+        elif ("gis" in whichschema) or
+            ("mainapi" in whichschema):
+            targetschema = "public"
+        elif "maindev" in whichschema:
+            targetschema = "public_dev"
+        else:
+            targetschema = "ingestion to this schema not implemented."
+
+        print(f"Ingesting to: '{targetschema}' schema")
+
+    else:
+        sys.exit("error: target database schema is required!")
+
     def filterpks(df,pkunavailable = None):
         if pkunavailable is not None:
             df  = df[~df.PrimaryKey.isin(pkunavailable)]
@@ -38,13 +54,15 @@ def batcher():
         print(f"assembled {table}!")
 
     print('finished assembling tables! ingesting..')
+    # todo: ingesting dataHeader first then deleting from
+    # table queue!
     # handling data header if it exists
-    if tutils.tablecheck('dataHeader'):
-        del complete['dataHeader']
+    # if tutils.tablecheck('dataHeader'):
+    #     del complete['dataHeader']
 
     for tablename,dataframe in complete.items():
         try:
-            d = dbc.db('maindev')
+            d = dbc.db(whichschema)
             if tutils.tablecheck(tablename):
                 ing.Ingester.main_ingest(dataframe, tablename, d.str)
             else:
@@ -53,4 +71,4 @@ def batcher():
                 print(f" ingested '{tablename}'!")
         except Exception as e:
             print(e)
-            d = dbc.db("maindev")
+            d = dbc.db(whichschema)

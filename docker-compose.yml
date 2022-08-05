@@ -1,0 +1,12 @@
+version: "3.9"
+services:
+  tallingest:
+    build:
+      context: .
+      dockerfile: ./src/Dockerfile
+    stdin_open: true
+    tty: true
+    container_name: tallingest
+
+# docker-compose build
+# docker-compose run --rm ingester
