@@ -14,7 +14,9 @@ def assemble(tablename):
     tall_files = {
         os.path.splitext(i)[0]:os.path.normpath(f"{dir}/{i}") for
             i in os.listdir(dir) if not i.endswith(".xlsx")
-            and not i.endswith(".ldb")}
+            and not i.endswith(".ldb")
+            and not i.startswith("~$")
+            }
     if "tblProject" in tablename:
         return proj.read_template()
 
@@ -31,6 +33,7 @@ def assemble(tablename):
         tall_files[tablename],
         encoding=enc,
         low_memory=False,
+        usecols=scheme.keys(),
         index_col=False,
         dtype = translated,
         parse_dates = date_finder(scheme)
@@ -38,12 +41,21 @@ def assemble(tablename):
         )
     # adding date loaded in db
     tempdf = dateloaded(tempdf)
+    tempdf = bitfix(tempdf, scheme)
+
 
     # adding projectkey value
     if "tblProject" not in tablename:
         prj = proj.read_template()
         project_key = prj.loc[0,"project_key"]
-        tempdf.project_key = project_key
+        if 'ProjectKey' not in tempdf.columns and 'project_key' not in tempdf.columns:
+            tempdf.ProjectKey = project_key
+        elif 'project_key' in tempdf.columns and 'ProjectKey' not in tempdf.columns:
+            tempdf.rename(columns = {'project_key':'ProjectKey'}, inplace=True)
+            tempdf.ProjectKey = project_key
+        elif 'ProjectKey' in tempdf.columns and 'project_key' not in tempdf.columns:
+            tempdf.ProjectKey = project_key
+
 
     if "dataHeader" in tablename:
         schema = tutils.todict(tablename).keys()
@@ -109,6 +121,22 @@ def assemble(tablename):
 
     return tempdf
 
+def bitfix(df, colscheme):
+    for i in df.columns:
+        if colscheme[i]=='bit':
+            if df[i].isin(['TRUE','FALSE']).any():
+                df[i] = df[i].apply(lambda x: 1 if (type(x)==str) and ("TRUE" in x) else x)
+                df[i] = df[i].apply(lambda x: 0 if (type(x)==str) and ("FALSE" in x) else x)
+                df[i] = df[i].astype('Int64')
+
+            elif df[i].isin(['Y','N']).any():
+                df[i] = df[i].apply(lambda x: 1 if (type(x)==str) and ("Y" in x) else x)
+                df[i] = df[i].apply(lambda x: 0 if (type(x)==str) and ("N" in x) else x)
+                df[i] = df[i].astype('Int64')
+
+    return df.copy()
+
+
 def geoenable(df):
     df.drop(columns=["wkb_geometry"], inplace=True)
     tempdf = gpd.GeoDataFrame(df,
@@ -134,9 +162,11 @@ def dateloaded(df):
 def pg2pandas(pg_schema):
     trans = {
         "text":"object",
+        "varchar": "object",
+        "geometry": "object",
         "integer":"Int64",
         "bigint":"Int64",
-        "bit":"Int64",
+        "bit":"object",
         "smallint":"Int64",
         "double precision":"float64",
         "numeric":"float64",
@@ -195,6 +225,14 @@ def create_command(tablename):
     elif "Project" in tablename:
         str = project_fix(str)
         # str = rid_adder(str)
+
+    elif "DustDeposition" in tablename:
+        str = nonheader_fix(str)
+        str = rid_adder(str)
+
+    elif "HorizontalFlux" in tablename:
+        str = nonheader_fix(str)
+        str = rid_adder(str)
 
     return str
 

@@ -32,7 +32,8 @@ project_table_fields = {
     "project_key":pd.Series([],dtype='object'),
     "project_name":pd.Series([],dtype='object'),
     "project_description":pd.Series([],dtype='object'),
-    "project_website":pd.Series([],dtype='object')
+    "project_website":pd.Series([],dtype='object'),
+    "data_use_agreement":pd.Series([],dtype='object'),
     }
 
 
@@ -79,7 +80,7 @@ def read_template():
     maindf.drop(maindf.index,inplace=True)
     data = None
     for path in os.listdir(dir):
-        if os.path.splitext(path)[1]==".xlsx":
+        if os.path.splitext(path)[1]==".xlsx" and "~$" not in os.path.splitext(path)[0]:
             df = pd.read_excel(os.path.join(dir,path))
 
             data = [i for i in df.Value]
