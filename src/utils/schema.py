@@ -12,13 +12,16 @@ def schema_chooser(tablename, which=0):
     # SCHEMA PATH LOADER
     schema_list = [
         os.path.normpath(f"{schema_dir}/{i}") for i in os.listdir(schema_dir)
-        if "Schema" in i and
-        os.path.splitext(i)[1].endswith(".xlsx")]
+        if "Schema" in i
+        and os.path.splitext(i)[1].endswith(".xlsx")
+        and not i.startswith("~$") ]
 
     if len(schema_list)>1:
         print("found more than 1 schema file in schema dir;")
         for i in schema_list:
             print(f"pos.{schema_list.index(i)} is \"{i}\"")
+    else:
+        pass
     schema_file = schema_list[which]
     # create dataframe with path
     excel_dataframe = pd.read_excel(schema_file)

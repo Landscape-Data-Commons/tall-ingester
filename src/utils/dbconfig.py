@@ -33,7 +33,7 @@ class db:
             self.str = self.str_1.getconn()
         else:
             if "maindev" in keyword:
-                self.params = config(section=f'{keyword}')
+                self.params = config(section='maindev')
                 self.params['options'] = "-c search_path=public_dev"
                 self.str_1 = SimpleConnectionPool(minconn=1,maxconn=10,**self.params)
                 self.str = self.str_1.getconn()

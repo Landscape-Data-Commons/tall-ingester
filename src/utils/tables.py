@@ -168,6 +168,7 @@ def pg2pandas(pg_schema):
         "bigint":"Int64",
         "bit":"object",
         "smallint":"Int64",
+        "real":"int64",
         "double precision":"float64",
         "numeric":"float64",
         "postgis.geometry":"object",

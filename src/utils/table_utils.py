@@ -35,7 +35,12 @@ def tablecheck(tablename, conn="newtall"):
     schema, else returns false
 
     """
-    tableschema = "public_test" if conn=="newtall" else "public"
+    if conn=="newtall":
+        tableschema = "public_test"
+    elif conn=="maindev":
+        tableschema = "public_dev"
+    else:
+        tableschma = "public"
     try:
         d = dbc.db(f'{conn}')
         con = d.str
