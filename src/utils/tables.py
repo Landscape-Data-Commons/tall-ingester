@@ -123,13 +123,15 @@ def assemble(tablename):
 
 def bitfix(df, colscheme):
     for i in df.columns:
-        if colscheme[i]=='bit':
+        if colscheme[i]=='bit' or colscheme[i]=='Bit':
             if df[i].isin(['TRUE','FALSE']).any():
+                df[i] = df[i].apply(lambda x: None if '0' in x else x)
                 df[i] = df[i].apply(lambda x: 1 if (type(x)==str) and ("TRUE" in x) else x)
                 df[i] = df[i].apply(lambda x: 0 if (type(x)==str) and ("FALSE" in x) else x)
                 df[i] = df[i].astype('Int64')
 
             elif df[i].isin(['Y','N']).any():
+                df[i] = df[i].apply(lambda x: None if '0' in x else x)
                 df[i] = df[i].apply(lambda x: 1 if (type(x)==str) and ("Y" in x) else x)
                 df[i] = df[i].apply(lambda x: 0 if (type(x)==str) and ("N" in x) else x)
                 df[i] = df[i].astype('Int64')
