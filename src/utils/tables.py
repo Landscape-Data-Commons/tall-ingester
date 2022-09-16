@@ -27,6 +27,12 @@ def assemble(tablename):
 
     # pulling schemas from xlsx and using them to readcsv
     scheme = tutils.todict(tablename)
+    if 'Flux' in tablename:
+        # 09-16-2022: horizontalflux table sometimes(?) may not have
+        # DateEstablished or ProjectKey, which are expected. Removing them
+        # from schema before the csv is created.
+        del scheme['DateEstablished']
+        del scheme['ProjectKey']
     translated = pg2pandas(scheme)
     tempdf = pd.read_csv(
 
@@ -40,6 +46,15 @@ def assemble(tablename):
 
         )
     # adding date loaded in db
+    #09-16-2022: HOrizontalflux with dateloadedindb (wrong case and empty)
+    # needs to be removed and re-added. easier to change the actual excel
+    # but not sustainable
+    # if 'Flux' in tablename:
+    #     if 'DateLoadedInDB' in tempdf.columns:
+    #         del scheme['DateLoadedInDB']
+    #         scheme['DateLoadedInDb'] = 'Date'
+    #         del tempdf['DateLoadedInDB']
+
     tempdf = dateloaded(tempdf)
     tempdf = bitfix(tempdf, scheme)
 
@@ -125,6 +140,8 @@ def bitfix(df, colscheme):
     for i in df.columns:
         if colscheme[i]=='bit' or colscheme[i]=='Bit':
             if df[i].isin(['TRUE','FALSE']).any():
+                # 09-15-2022: some bit fields have string 0 in them (object dtype)
+                # replacing them with None
                 df[i] = df[i].apply(lambda x: None if '0' in x else x)
                 df[i] = df[i].apply(lambda x: 1 if (type(x)==str) and ("TRUE" in x) else x)
                 df[i] = df[i].apply(lambda x: 0 if (type(x)==str) and ("FALSE" in x) else x)
@@ -170,7 +187,7 @@ def pg2pandas(pg_schema):
         "bigint":"Int64",
         "bit":"object",
         "smallint":"Int64",
-        "real":"int64",
+        "real":"float64",
         "double precision":"float64",
         "numeric":"float64",
         "postgis.geometry":"object",
