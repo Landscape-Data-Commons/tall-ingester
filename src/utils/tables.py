@@ -45,6 +45,7 @@ def assemble(tablename):
         parse_dates = date_finder(scheme)
 
         )
+
     # adding date loaded in db
     #09-16-2022: HOrizontalflux with dateloadedindb (wrong case and empty)
     # needs to be removed and re-added. easier to change the actual excel
@@ -64,12 +65,12 @@ def assemble(tablename):
         prj = proj.read_template()
         project_key = prj.loc[0,"project_key"]
         if 'ProjectKey' not in tempdf.columns and 'project_key' not in tempdf.columns:
-            tempdf.ProjectKey = project_key
+            tempdf['ProjectKey'] = project_key
         elif 'project_key' in tempdf.columns and 'ProjectKey' not in tempdf.columns:
             tempdf.rename(columns = {'project_key':'ProjectKey'}, inplace=True)
-            tempdf.ProjectKey = project_key
+            tempdf['ProjectKey'] = project_key
         elif 'ProjectKey' in tempdf.columns and 'project_key' not in tempdf.columns:
-            tempdf.ProjectKey = project_key
+            tempdf['ProjectKey'] = project_key
 
 
     if "dataHeader" in tablename:

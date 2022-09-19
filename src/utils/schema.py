@@ -1,6 +1,11 @@
 import pandas as pd
 import os
 import json
+from datetime import datetime
+import src.utils.ingester as ing # Ingester
+import src.utils.table_utils as tutils
+import src.utils.tables as tbl
+import src.utils.dbconfig as dbc
 # parse types per table
 # schema_chooser("aero_runs")
 
@@ -42,3 +47,97 @@ def schema_chooser(tablename, which=0):
 
     # return dataframe
     return excel_dataframe[excel_dataframe['Table']==tablename]
+
+def pandas2pg(pg_schema):
+    trans = {
+        "object":"text",
+        'float64':"numeric",
+    }
+    return {k:trans[v] for k,v in pg_schema.items()}
+
+def schemaTableCreate(conn, schemaVer):
+    """ script to create the new table
+    args:
+        conn:string = which schema this table is going to be sent to on pg.
+        schemaVer:string = which version of the schema (assuming we're going
+        to have multiple versions in the same table)
+        
+    dependencies:
+        datetime
+        pd
+        os
+        tutils
+        tbl
+        pandas2pg
+
+    """
+    tablename = "tblSchema"
+    schema_dir = json.load(open(file=os.path.normpath(os.path.join(os.getcwd(),"src","utils","config.json") )))["schema_dir"]
+
+    # SCHEMA PATH LOADER
+    schema_list = [
+        os.path.normpath(f"{schema_dir}/{i}") for i in os.listdir(schema_dir)
+        if "Schema" in i
+        and os.path.splitext(i)[1].endswith(".xlsx")
+        and not i.startswith("~$") ]
+
+    if len(schema_list)>1:
+        print("found more than 1 schema file in schema dir;")
+        for i in schema_list:
+            print(f"pos.{schema_list.index(i)} is \"{i}\"")
+    else:
+        pass
+    which = 0
+
+    schema_file = schema_list[which]
+    # create dataframe with path
+    excel_dataframe = pd.read_excel(schema_file)
+    excel_dataframe = excel_dataframe.drop(columns=["Order"])
+    excel_dataframe["Version"] = schemaVer
+    excel_dataframe["Uploaded"] = datetime.now().date()
+
+    # schema
+    str = "( "
+    count = 0
+
+    pandas = pd.Series(
+            excel_dataframe.dtypes.values.astype('str'),
+            index=excel_dataframe.columns).to_dict()
+
+    di = pandas2pg(pandas)
+
+    for k,v in di.items():
+        if count<(len(di.items())-1):
+            str+= f'"{k}" {v.upper()}, '
+            count+=1
+        else:
+            str+= f'"{k}" {v.upper()} );'
+    # str = str.replace('"Order" NUMERIC,', "")
+    # print(str)
+    str2 = f'CREATE TABLE "tblSchema" '
+    str2+=str
+
+    str2 = tbl.rid_adder(str2)
+    if tutils.tablecheck(tablename, conn):
+        d = dbc.db(f'{conn}')
+        ing.Ingester.main_ingest(excel_dataframe, tablename, d.str, 10000)
+    else:
+        try:
+            d = dbc.db(f'{conn}')
+            con = d.str
+            print("checking fields")
+            comm = str2
+            cur = con.cursor()
+            # return comm
+            cur.execute(comm)
+            cur.execute(tables.set_srid()) if "Header" in tablename else None
+            con.commit()
+
+        except Exception as e:
+            print(e)
+            d = dbc.db(f'{conn}')
+            con = d.str
+            cur = con.cursor()
+
+        d = dbc.db(f'{conn}')
+        ing.Ingester.main_ingest(excel_dataframe, tablename, d.str, 10000)
