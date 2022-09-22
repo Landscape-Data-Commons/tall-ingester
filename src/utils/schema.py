@@ -52,6 +52,7 @@ def pandas2pg(pg_schema):
     trans = {
         "object":"text",
         'float64':"numeric",
+        'int64':"numeric",
     }
     return {k:trans[v] for k,v in pg_schema.items()}
 
@@ -61,7 +62,7 @@ def schemaTableCreate(conn, schemaVer):
         conn:string = which schema this table is going to be sent to on pg.
         schemaVer:string = which version of the schema (assuming we're going
         to have multiple versions in the same table)
-        
+
     dependencies:
         datetime
         pd
@@ -92,7 +93,7 @@ def schemaTableCreate(conn, schemaVer):
     schema_file = schema_list[which]
     # create dataframe with path
     excel_dataframe = pd.read_excel(schema_file)
-    excel_dataframe = excel_dataframe.drop(columns=["Order"])
+    # excel_dataframe = excel_dataframe.drop(columns=["Order"])
     excel_dataframe["Version"] = schemaVer
     excel_dataframe["Uploaded"] = datetime.now().date()
 
@@ -141,3 +142,52 @@ def schemaTableCreate(conn, schemaVer):
 
         d = dbc.db(f'{conn}')
         ing.Ingester.main_ingest(excel_dataframe, tablename, d.str, 10000)
+
+        
+def schema_restore_csv(conn):
+    """ use backup.csv to restore
+    table up in pg.
+    #1. read csv (make sure it has new fields in the correct order)
+    #2. send to pg
+
+    """
+    tablename = "tblSchema"
+    schemapath = os.path.normpath(os.path.join(os.getcwd(),"src","schemas","backup.csv"))
+    schemadf = pd.read_csv(schemapath)
+
+    str = "( "
+    count = 0
+
+    pandas = pd.Series(
+            schemadf.dtypes.values.astype('str'),
+            index=schemadf.columns).to_dict()
+
+    di = pandas2pg(pandas)
+    for k,v in di.items():
+        if count<(len(di.items())-1):
+            str+= f'"{k}" {v.upper()}, '
+            count+=1
+        else:
+            str+= f'"{k}" {v.upper()} );'
+    # str = str.replace('"Order" NUMERIC,', "")
+    # print(str)
+    str2 = f'CREATE TABLE "tblSchema" '
+    str2+=str
+    str2 = tbl.rid_adder(str2)
+
+    try:
+        d = dbc.db(f'{conn}')
+        con = d.str
+        print("checking fields")
+        comm = str2
+        cur = con.cursor()
+        # return comm
+        cur.execute(comm)
+        con.commit()
+    except Exception as e:
+        print(e)
+        d = dbc.db(f'{conn}')
+        con = d.str
+        cur = con.cursor()
+    d = dbc.db(f'{conn}')
+    ing.Ingester.main_ingest(schemadf, tablename, d.str, 10000)
