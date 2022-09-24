@@ -40,7 +40,7 @@ class Ingester:
                 f = StringIO()
                 chunk = df.iloc[i:(i + chunk_size)]
 
-                chunk.to_csv(f, index=False, header=False, sep='\t', na_rep='\\N', quoting=None)
+                chunk.to_csv(f, index=False, header=False, sep='\t', na_rep='\\N', quoting=None, encoding="utf-8")
                 f.seek(0)
                 cursor.copy_from(f, f'"{table}"', columns=[f'"{i}"' for i in df.columns])
                 connection.commit()

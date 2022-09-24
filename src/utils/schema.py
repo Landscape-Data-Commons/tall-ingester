@@ -53,6 +53,7 @@ def pandas2pg(pg_schema):
         "object":"text",
         'float64':"numeric",
         'int64':"numeric",
+        'datetime64[ns]':"Date",
     }
     return {k:trans[v] for k,v in pg_schema.items()}
 
@@ -92,7 +93,7 @@ def schemaTableCreate(conn, schemaVer):
 
     schema_file = schema_list[which]
     # create dataframe with path
-    excel_dataframe = pd.read_excel(schema_file)
+    excel_dataframe = pd.read_excel(schema_file,encoding="utf-8")
     # excel_dataframe = excel_dataframe.drop(columns=["Order"])
     excel_dataframe["Version"] = schemaVer
     excel_dataframe["Uploaded"] = datetime.now().date()
@@ -143,7 +144,7 @@ def schemaTableCreate(conn, schemaVer):
         d = dbc.db(f'{conn}')
         ing.Ingester.main_ingest(excel_dataframe, tablename, d.str, 10000)
 
-        
+
 def schema_restore_csv(conn):
     """ use backup.csv to restore
     table up in pg.
@@ -152,8 +153,9 @@ def schema_restore_csv(conn):
 
     """
     tablename = "tblSchema"
-    schemapath = os.path.normpath(os.path.join(os.getcwd(),"src","schemas","backup.csv"))
-    schemadf = pd.read_csv(schemapath)
+    schemapath = os.path.normpath(os.path.join(os.getcwd(),"src","schemas","backup.xlsx"))
+    schemadf = pd.read_excel(schemapath, encoding="utf-8")
+    schemadf["Uploaded"] = pd.to_datetime(schemadf["Uploaded"])
 
     str = "( "
     count = 0

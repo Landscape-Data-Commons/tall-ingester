@@ -34,112 +34,115 @@ def assemble(tablename):
         del scheme['DateEstablished']
         del scheme['ProjectKey']
     translated = pg2pandas(scheme)
-    tempdf = pd.read_csv(
+    if tablename in tall_files.keys():
+        tempdf = pd.read_csv(
 
-        tall_files[tablename],
-        encoding=enc,
-        low_memory=False,
-        usecols=scheme.keys(),
-        index_col=False,
-        dtype = translated,
-        parse_dates = date_finder(scheme)
+            tall_files[tablename],
+            encoding=enc,
+            low_memory=False,
+            usecols=scheme.keys(),
+            index_col=False,
+            dtype = translated,
+            parse_dates = date_finder(scheme)
 
-        )
+            )
 
-    # adding date loaded in db
-    #09-16-2022: HOrizontalflux with dateloadedindb (wrong case and empty)
-    # needs to be removed and re-added. easier to change the actual excel
-    # but not sustainable
-    # if 'Flux' in tablename:
-    #     if 'DateLoadedInDB' in tempdf.columns:
-    #         del scheme['DateLoadedInDB']
-    #         scheme['DateLoadedInDb'] = 'Date'
-    #         del tempdf['DateLoadedInDB']
+        # adding date loaded in db
+        #09-16-2022: HOrizontalflux with dateloadedindb (wrong case and empty)
+        # needs to be removed and re-added. easier to change the actual excel
+        # but not sustainable
+        # if 'Flux' in tablename:
+        #     if 'DateLoadedInDB' in tempdf.columns:
+        #         del scheme['DateLoadedInDB']
+        #         scheme['DateLoadedInDb'] = 'Date'
+        #         del tempdf['DateLoadedInDB']
 
-    tempdf = dateloaded(tempdf)
-    tempdf = bitfix(tempdf, scheme)
-
-
-    # adding projectkey value
-    if "tblProject" not in tablename:
-        prj = proj.read_template()
-        project_key = prj.loc[0,"project_key"]
-        if 'ProjectKey' not in tempdf.columns and 'project_key' not in tempdf.columns:
-            tempdf['ProjectKey'] = project_key
-        elif 'project_key' in tempdf.columns and 'ProjectKey' not in tempdf.columns:
-            tempdf.rename(columns = {'project_key':'ProjectKey'}, inplace=True)
-            tempdf['ProjectKey'] = project_key
-        elif 'ProjectKey' in tempdf.columns and 'project_key' not in tempdf.columns:
-            tempdf['ProjectKey'] = project_key
+        tempdf = dateloaded(tempdf)
+        tempdf = bitfix(tempdf, scheme)
 
 
-    if "dataHeader" in tablename:
-        schema = tutils.todict(tablename).keys()
-        tempdf.rename(columns={"EcologicalSiteId": "EcologicalSiteID"}, inplace=True)
-        tempdf = tempdf.filter(schema)
-        tempdf = tempdf.drop_duplicates()
-        tempdf = geoenable(tempdf)
-
-    if "dataLPI" in tablename:
-
-        # tempdf.drop(columns=["X"], inplace=True)
-        schema = tutils.todict(tablename).keys()
-        tempdf = tempdf.filter(schema)
-        tempdf = tempdf.drop_duplicates()
-
-    if "dataGap" in tablename:
-        #
-        #
-        tempdf = tempdf.drop_duplicates()
-        schema = tutils.todict(tablename).keys()
-        tempdf = tempdf.filter(schema)
-        #
-        # # for i in integers:
-        # #     tempdf[i] = tempdf[i].apply(lambda x: pd.NA if pd.isnull(x)==True else x).astype('Int64')
-        # tempdf  = tempdf[~tempdf.PrimaryKey.isin(gap)]
-
-    if "dataHeight" in tablename:
-        # integers = [ "Measure", "LineLengthAmount", 'PointNbr' , 'Chkbox','ShowCheckbox']
+        # adding projectkey value
+        if "tblProject" not in tablename:
+            prj = proj.read_template()
+            project_key = prj.loc[0,"project_key"]
+            if 'ProjectKey' not in tempdf.columns and 'project_key' not in tempdf.columns:
+                tempdf['ProjectKey'] = project_key
+            elif 'project_key' in tempdf.columns and 'ProjectKey' not in tempdf.columns:
+                tempdf.rename(columns = {'project_key':'ProjectKey'}, inplace=True)
+                tempdf['ProjectKey'] = project_key
+            elif 'ProjectKey' in tempdf.columns and 'project_key' not in tempdf.columns:
+                tempdf['ProjectKey'] = project_key
 
 
-        schema = tutils.todict(tablename).keys()
-        tempdf = tempdf.filter(schema)
-        tempdf = tempdf.drop_duplicates()
-        # for i in integers:
-        #     tempdf[i] = tempdf[i].apply(lambda x: pd.NA if pd.isnull(x)==True else x).astype('Int64')
+        if "dataHeader" in tablename:
+            schema = tutils.todict(tablename).keys()
+            tempdf.rename(columns={"EcologicalSiteId": "EcologicalSiteID"}, inplace=True)
+            tempdf = tempdf.filter(schema)
+            tempdf = tempdf.drop_duplicates()
+            tempdf = geoenable(tempdf)
+
+        if "dataLPI" in tablename:
+
+            # tempdf.drop(columns=["X"], inplace=True)
+            schema = tutils.todict(tablename).keys()
+            tempdf = tempdf.filter(schema)
+            tempdf = tempdf.drop_duplicates()
+
+        if "dataGap" in tablename:
+            #
+            #
+            tempdf = tempdf.drop_duplicates()
+            schema = tutils.todict(tablename).keys()
+            tempdf = tempdf.filter(schema)
+            #
+            # # for i in integers:
+            # #     tempdf[i] = tempdf[i].apply(lambda x: pd.NA if pd.isnull(x)==True else x).astype('Int64')
+            # tempdf  = tempdf[~tempdf.PrimaryKey.isin(gap)]
+
+        if "dataHeight" in tablename:
+            # integers = [ "Measure", "LineLengthAmount", 'PointNbr' , 'Chkbox','ShowCheckbox']
 
 
-    if "dataSoilStability" in tablename:
-
-        tempdf = tempdf.drop_duplicates()
-        schema = tutils.todict(tablename).keys()
-        tempdf = tempdf.filter(schema)
-
-
-    if "dataSpeciesInventory" in tablename:
+            schema = tutils.todict(tablename).keys()
+            tempdf = tempdf.filter(schema)
+            tempdf = tempdf.drop_duplicates()
+            # for i in integers:
+            #     tempdf[i] = tempdf[i].apply(lambda x: pd.NA if pd.isnull(x)==True else x).astype('Int64')
 
 
-        tempdf = tempdf.drop_duplicates()
-        schema = tutils.todict(tablename).keys()
-        tempdf = tempdf.filter(schema)
+        if "dataSoilStability" in tablename:
+
+            tempdf = tempdf.drop_duplicates()
+            schema = tutils.todict(tablename).keys()
+            tempdf = tempdf.filter(schema)
 
 
-    if "geoIndicators" in tablename:
-        tempdf.drop_duplicates()
-        schema = tutils.todict(tablename).keys()
-        tempdf = tempdf.filter(schema)
-
-    if "geoSpecies" in tablename:
-        tempdf.drop_duplicates()
-        schema = tutils.todict(tablename).keys()
-        tempdf = tempdf.filter(schema)
+        if "dataSpeciesInventory" in tablename:
 
 
-    return tempdf
+            tempdf = tempdf.drop_duplicates()
+            schema = tutils.todict(tablename).keys()
+            tempdf = tempdf.filter(schema)
+
+
+        if "geoIndicators" in tablename:
+            tempdf.drop_duplicates()
+            schema = tutils.todict(tablename).keys()
+            tempdf = tempdf.filter(schema)
+
+        if "geoSpecies" in tablename:
+            tempdf.drop_duplicates()
+            schema = tutils.todict(tablename).keys()
+            tempdf = tempdf.filter(schema)
+
+
+        return tempdf
+    else:
+        return pd.DataFrame()
 
 def bitfix(df, colscheme):
     for i in df.columns:
-        if colscheme[i]=='bit' or colscheme[i]=='Bit':
+        if colscheme[i]=='bit' or colscheme[i]=='Bit' or colscheme[i]=="BIT":
             if df[i].isin(['TRUE','FALSE']).any():
                 # 09-15-2022: some bit fields have string 0 in them (object dtype)
                 # replacing them with None
@@ -155,6 +158,7 @@ def bitfix(df, colscheme):
                 df[i] = df[i].astype('Int64')
 
     return df.copy()
+
 
 
 def geoenable(df):
@@ -323,3 +327,82 @@ def rid_adder(str):
 
 def height_fix(str):
     fix = str.replace('" ( ', '" ( ri)"')
+
+
+
+
+def batcher(schema):
+
+    tablelist = [
+    "dataHeader",
+    "dataGap",
+    "dataHeight",
+    "dataLPI",
+    "dataSoilStability",
+    "dataSpeciesInventory",
+    "geoIndicators",
+    "geoSpecies",
+    "dataHorizontalFlux",
+    "tblProject"
+    ]
+
+    def filterpks(df,pkunavailable = None):
+        if pkunavailable is not None:
+            df  = df[~df.PrimaryKey.isin(pkunavailable)]
+        return df
+
+    unavailablepks = {}
+    complete={}
+    # need to create dataheader first for pk filtering belo
+    #
+    complete['dataHeader'] = tbl.assemble('dataHeader').drop_duplicates()
+
+    print("assembling...")
+    for table in tablelist:
+        df = tbl.assemble(table).drop_duplicates()
+        if df.empty:
+            pass
+        else:
+            print(f'finding unavailable primarykeys for {table}...')
+            if 'tblProject' not in table:
+                unavailablepks[table] = [i for i in df.PrimaryKey.unique() if i not in complete['dataHeader'].PrimaryKey.unique() ]
+                df = filterpks(df, unavailablepks[table])
+                # df  = df[~df.PrimaryKey.isin(pkunavailable)]
+            complete[table] = df
+            print(f"assembled {table}!")
+
+    print('finished assembling tables! ingesting..')
+    # handling data header if it exists
+    # if tutils.tablecheck('dataHeader'):
+    #     del complete['dataHeader']
+    #     del complete['tblProject']
+
+    for tablename,dataframe in complete.items():
+        try:
+            d = dbc.db(schema)
+            if tutils.tablecheck(tablename, schema):
+                if dataframe.empty:
+                    print(f"skipping {tablename}")
+                else:
+                    ing.Ingester.main_ingest(dataframe, tablename, d.str, 10000)
+                    print(f" ingested '{tablename}'! (noncreate table route)")
+            else:
+                if dataframe.empty:
+                    print(f"skipping {tablename}")
+                else:
+                    tutils.table_create(tablename, d.str)
+                    ing.Ingester.main_ingest(dataframe, tablename, d.str, 10000)
+                    print(f" ingested '{tablename}'! (create table route)")
+        except Exception as e:
+            print(e)
+            d = dbc.db(schema)
+
+
+
+def df_check(tbllist):
+
+    for i in tbllist:
+        if tbl.assemble(i).empty:
+            pass
+        else:
+            print(f"table {i}: all good")
