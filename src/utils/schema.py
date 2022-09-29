@@ -6,6 +6,7 @@ import src.utils.ingester as ing # Ingester
 import src.utils.table_utils as tutils
 import src.utils.tables as tbl
 import src.utils.dbconfig as dbc
+import six
 # parse types per table
 # schema_chooser("aero_runs")
 
@@ -97,6 +98,9 @@ def schemaTableCreate(conn, schemaVer):
     # excel_dataframe = excel_dataframe.drop(columns=["Order"])
     excel_dataframe["Version"] = schemaVer
     excel_dataframe["Uploaded"] = datetime.now().date()
+    for i in excel_dataframe.columns:
+        if excel_dataframe.dtypes[i]=="object":
+            excel_dataframe[i] = excel_dataframe[i].apply(lambda x: x.strip() if pd.isna(x)!=True and isinstance(x, six.string_types)==True else x)
 
     # schema
     str = "( "
@@ -156,6 +160,9 @@ def schema_restore_csv(conn):
     schemapath = os.path.normpath(os.path.join(os.getcwd(),"src","schemas","backup.xlsx"))
     schemadf = pd.read_excel(schemapath, encoding="utf-8")
     schemadf["Uploaded"] = pd.to_datetime(schemadf["Uploaded"])
+    for i in schemadf.columns:
+        if schemadf.dtypes[i]=="object":
+            schemadf[i] = schemadf[i].apply(lambda x: x.strip() if pd.isna(x)!=True and isinstance(x, six.string_types)==True else x)
 
     str = "( "
     count = 0
