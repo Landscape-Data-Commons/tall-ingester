@@ -8,6 +8,8 @@ from pyproj import CRS
 import src.project.project as proj
 import src.utils.schema as stools # schema_chooser
 import src.utils.table_utils as tutils # table_create, todict
+import src.utils.dbconfig as dbc #db
+import src.utils.ingester as ing # Ingester
 
 def assemble(tablename):
     dir = json.load(open(file=os.path.normpath(os.path.join(os.getcwd(),"src","utils","config.json") )))["tall_dir"]
@@ -146,16 +148,23 @@ def bitfix(df, colscheme):
             if df[i].isin(['TRUE','FALSE']).any():
                 # 09-15-2022: some bit fields have string 0 in them (object dtype)
                 # replacing them with None
-                df[i] = df[i].apply(lambda x: None if '0' in x else x)
+                if df[i].isin(['0']).any():
+                    df[i] = df[i].apply(lambda x: 0 if (type(x)==str) and ('0' in x) else x)
+                df[i] = df[i].apply(lambda x: pd.NA if pd.isna(x)==True else x)
                 df[i] = df[i].apply(lambda x: 1 if (type(x)==str) and ("TRUE" in x) else x)
                 df[i] = df[i].apply(lambda x: 0 if (type(x)==str) and ("FALSE" in x) else x)
+
                 df[i] = df[i].astype('Int64')
 
+
             elif df[i].isin(['Y','N']).any():
-                df[i] = df[i].apply(lambda x: None if '0' in x else x)
+                if df[i].isin(['0']).any():
+                    df[i] = df[i].apply(lambda x: 0 if (type(x)==str) and ('0' in x) else x)
+                df[i] = df[i].apply(lambda x: pd.NA if pd.isna(x)==True else x)
                 df[i] = df[i].apply(lambda x: 1 if (type(x)==str) and ("Y" in x) else x)
                 df[i] = df[i].apply(lambda x: 0 if (type(x)==str) and ("N" in x) else x)
                 df[i] = df[i].astype('Int64')
+
 
     return df.copy()
 
@@ -355,11 +364,11 @@ def batcher(schema):
     complete={}
     # need to create dataheader first for pk filtering belo
     #
-    complete['dataHeader'] = tbl.assemble('dataHeader').drop_duplicates()
+    complete['dataHeader'] = assemble('dataHeader').drop_duplicates()
 
     print("assembling...")
     for table in tablelist:
-        df = tbl.assemble(table).drop_duplicates()
+        df = assemble(table).drop_duplicates()
         if df.empty:
             pass
         else:
