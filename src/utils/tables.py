@@ -204,7 +204,7 @@ def pg2pandas(pg_schema):
         "real":"float64",
         "double precision":"float64",
         "numeric":"float64",
-        "postgis.geometry":"object",
+        "public.geometry":"object",
         "date":"str", #important
         "timestamp":"str" #important,
     }
@@ -272,8 +272,8 @@ def create_command(tablename):
 
 def set_srid():
     return r"""ALTER TABLE public_test."dataHeader"
-                ALTER COLUMN wkb_geometry TYPE postgis.geometry(Point, 4326)
-                USING postgis.ST_SetSRID(wkb_geometry,4326);"""
+                ALTER COLUMN wkb_geometry TYPE public.geometry(Point, 4326)
+                USING public.ST_SetSRID(wkb_geometry,4326);"""
 
 def field_appender(tablename):
     """
@@ -303,7 +303,7 @@ def header_fix(str):
     """
 
     fix = str.replace('"PrimaryKey" TEXT,', '"PrimaryKey" TEXT PRIMARY KEY,')
-    fix = fix.replace('POSTGIS.GEOMETRY,', 'postgis.GEOMETRY(POINT, 4326),')
+    fix = fix.replace('PUBLIC.GEOMETRY,', 'PUBLIC.GEOMETRY(POINT, 4326),')
     return fix
 
 def nonheader_fix(str):
@@ -336,7 +336,6 @@ def rid_adder(str):
 
 def height_fix(str):
     fix = str.replace('" ( ', '" ( ri)"')
-
 
 
 

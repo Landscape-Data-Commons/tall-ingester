@@ -24,6 +24,8 @@ def batcher(whichschema):
             targetschema = "public"
         elif "maindev" in whichschema:
             targetschema = "public_dev"
+        elif "localpg" in whichschema:
+            targetschema = "localpg"
         else:
             targetschema = "ingestion to this schema not implemented."
 

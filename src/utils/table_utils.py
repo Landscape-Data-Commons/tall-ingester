@@ -39,8 +39,10 @@ def tablecheck(tablename, conn="newtall"):
         tableschema = "public_test"
     elif conn=="maindev":
         tableschema = "public_dev"
+    elif conn=="localpg":
+        tableschema = "public_test"
     else:
-        tableschma = "public"
+        tableschema = "public_test"
     try:
         d = dbc.db(f'{conn}')
         con = d.str
@@ -70,111 +72,112 @@ def todict(tablename, length=None, which=0):
                 index=sche.Field).to_dict()
         return di
 
-
-def geoind_postingest(conn="newtall"):
-    """
-    fixes geoindicators after it has been ingested
-
-    """
-    tableschema = "public_dev" if conn=="maindev" else "public"
-
-    create_mlra_name = r""" alter table public_dev."geoIndicators"
-                            add column mlra_name VARCHAR(200);"""
-
-    update_mlra_name =r""" update public_dev."geoIndicators" as target
-                            set mlra_name = src.mlra_name
-                            from (
-                            	  select geo.mlra_name, dh."PrimaryKey", geo.mlrarsym
-                            	  from gis.mlra_v42_wgs84 as geo
-                            	  join public_dev."dataHeader" as dh
-                            	  on ST_WITHIN(dh.wkb_geometry, geo.geom)
-                            	) as src
-                            where target."PrimaryKey" = src."PrimaryKey"; """
-
-    create_mlrasym = r""" alter table public_dev."geoIndicators"
-                            add column mlrarsym VARCHAR(4);  """
-
-    update_mlrasym = r"""update public_dev."geoIndicators" as target
-                            set mlrarsym = src.mlrarsym
-                            from (
-                            	  select geo.mlra_name, dh."PrimaryKey", geo.mlrarsym
-                            	  from gis.mlra_v42_wgs84 as geo
-                            	  join public_dev."dataHeader" as dh
-                            	  on ST_WITHIN(dh.wkb_geometry, geo.geom)
-                            	) as src
-                            where target."PrimaryKey" = src."PrimaryKey";"""
-
-    create_nanames = r"""alter table public_dev."geoIndicators"
-                             add column na_l1name VARCHAR(100),
-                             add column na_l2name VARCHAR(100),
-                             add column us_l3name VARCHAR(100),
-                             add column us_l4name VARCHAR(100);"""
-
-    update_nanames = r"""update public_dev."geoIndicators" as target
-                            set na_l1name = src.na_l1name,
-                             na_l2name = src.na_l2name,
-                             us_l3name = src.us_l3name,
-                             us_l4name = src.us_l4name
-                            from
-                                (select geo.us_l4name, geo.us_l3name, geo.na_l2name, geo.na_l1name,
-                                dh."PrimaryKey"
-                            	  from gis.us_eco_level_4 as geo
-                            	  join public_dev."dataHeader" as dh
-                            	  on ST_WITHIN(dh.wkb_geometry, geo.geom)) as src
-                            where target."PrimaryKey" = src."PrimaryKey";"""
-    create_state = r"""alter table public_dev."geoIndicators"
-                        add column "State" TEXT; """
-    update_state = r""" update public_dev."geoIndicators" as target
-                        set "State" = src.stusps
-                        from (
-                        	 select geo.stusps, dh."PrimaryKey"
-                        	 from gis.tl_2017_us_state_wgs84 as geo
-                        	 join public_dev."dataHeader" as dh
-                        	 on ST_WITHIN(dh.wkb_geometry, geo.geom)
-                        	) as src
-                        where target."PrimaryKey" = src."PrimaryKey";"""
-    try:
-        d = dbc.db(f'{conn}')
-        constring = engine_conn_string('newtall')
-
-        con = d.str
-        if tablecheck("geoIndicators"): # table exists
-            cur = con.cursor()
-            # if field does not exist
-            cur.execute(create_mlra_name)
-            cur.execute(update_mlra_name)
-            # if field does not exist
-            cur.execute(create_mlrasym)
-            cur.execute(update_mlrasym)
-            # if field does not exist
-            cur.execute(create_nanames)
-            cur.execute(update_nanames)
-            # if field does not exist
-            cur.execute(create_state)
-            cur.execute(update_state)
-            #  geotif processing
-            gi = gpd.read_postgis('select * from public_dev."geoIndicators";', eng, geom_col="wkb_geometry")
-            classes = pd.read_sql('select * from public.modis_classes;', d.str)
-
-            pgdf = extract_modis_values(gi, tif)
-            pg = pgdf.copy(deep=True)
-            pg.rename(columns={"modis_val":"Value"}, inplace=True)
-            final = pg.merge(classes, on="Value", how="inner").filter(["PrimaryKey", "Name"])
-            final.to_sql('modis_values', eng, schema='public_dev')
-
-
-        # if cur.fetchone()[0]:
-        #     return True
-        # else:
-        #     return False
-
-    except Exception as e:
-        print(e)
-        d = dbc.db(f'{conn}')
-        con = d.str
-        cur = con.cursor()
-
-
+#
+# def geoind_postingest(conn="newtall"):
+#     """
+#     fixes geoindicators after it has been ingested
+#
+#     """
+#     tableschema = "public_dev" if conn=="maindev" else "public"
+#
+#     create_mlra_name = r""" alter table public_dev."geoIndicators"
+#                             add column mlra_name VARCHAR(200);"""
+#
+#     update_mlra_name =r""" update public_dev."geoIndicators" as target
+#                             set mlra_name = src.mlra_name
+#                             from (
+#                             	  select geo.mlra_name, dh."PrimaryKey", geo.mlrarsym
+#                             	  from gis.mlra_v42_wgs84 as geo
+#                             	  join public_dev."dataHeader" as dh
+#                             	  on ST_WITHIN(dh.wkb_geometry, geo.geom)
+#                             	) as src
+#                             where target."PrimaryKey" = src."PrimaryKey"; """
+#
+#     create_mlrasym = r""" alter table public_dev."geoIndicators"
+#                             add column mlrarsym VARCHAR(4);  """
+#
+#     update_mlrasym = r"""update public_dev."geoIndicators" as target
+#                             set mlrarsym = src.mlrarsym
+#                             from (
+#                             	  select geo.mlra_name, dh."PrimaryKey", geo.mlrarsym
+#                             	  from gis.mlra_v42_wgs84 as geo
+#                             	  join public_dev."dataHeader" as dh
+#                             	  on ST_WITHIN(dh.wkb_geometry, geo.geom)
+#                             	) as src
+#                             where target."PrimaryKey" = src."PrimaryKey";"""
+#
+#     create_nanames = r"""alter table public_dev."geoIndicators"
+#                              add column na_l1name VARCHAR(100),
+#                              add column na_l2name VARCHAR(100),
+#                              add column us_l3name VARCHAR(100),
+#                              add column us_l4name VARCHAR(100);"""
+#
+#     update_nanames = r"""update public_dev."geoIndicators" as target
+#                             set na_l1name = src.na_l1name,
+#                              na_l2name = src.na_l2name,
+#                              us_l3name = src.us_l3name,
+#                              us_l4name = src.us_l4name
+#                             from
+#                                 (select geo.us_l4name, geo.us_l3name, geo.na_l2name, geo.na_l1name,
+#                                 dh."PrimaryKey"
+#                             	  from gis.us_eco_level_4 as geo
+#                             	  join public_dev."dataHeader" as dh
+#                             	  on ST_WITHIN(dh.wkb_geometry, geo.geom)) as src
+#                             where target."PrimaryKey" = src."PrimaryKey";"""
+#
+#     create_state = r"""alter table public_dev."geoIndicators"
+#                         add column "State" TEXT; """
+#     update_state = r""" update public_dev."geoIndicators" as target
+#                         set "State" = src.stusps
+#                         from (
+#                         	 select geo.stusps, dh."PrimaryKey"
+#                         	 from gis.tl_2017_us_state_wgs84 as geo
+#                         	 join public_dev."dataHeader" as dh
+#                         	 on ST_WITHIN(dh.wkb_geometry, geo.geom)
+#                         	) as src
+#                         where target."PrimaryKey" = src."PrimaryKey";"""
+#     try:
+#         d = dbc.db(f'{conn}')
+#         constring = engine_conn_string('newtall')
+#
+#         con = d.str
+#         if tablecheck("geoIndicators"): # table exists
+#             cur = con.cursor()
+#             # if field does not exist
+#             cur.execute(create_mlra_name)
+#             cur.execute(update_mlra_name)
+#             # if field does not exist
+#             cur.execute(create_mlrasym)
+#             cur.execute(update_mlrasym)
+#             # if field does not exist
+#             cur.execute(create_nanames)
+#             cur.execute(update_nanames)
+#             # if field does not exist
+#             cur.execute(create_state)
+#             cur.execute(update_state)
+#             #  geotif processing
+#             gi = gpd.read_postgis('select * from public_dev."geoIndicators";', eng, geom_col="wkb_geometry")
+#             classes = pd.read_sql('select * from public.modis_classes;', d.str)
+#
+#             pgdf = extract_modis_values(gi, tif)
+#             pg = pgdf.copy(deep=True)
+#             pg.rename(columns={"modis_val":"Value"}, inplace=True)
+#             final = pg.merge(classes, on="Value", how="inner").filter(["PrimaryKey", "Name"])
+#             final.to_sql('modis_values', eng, schema='public_dev')
+#
+#
+#         # if cur.fetchone()[0]:
+#         #     return True
+#         # else:
+#         #     return False
+#
+#     except Exception as e:
+#         print(e)
+#         d = dbc.db(f'{conn}')
+#         con = d.str
+#         cur = con.cursor()
+#
+#
 
 
 def tableComparison():
@@ -219,7 +222,13 @@ def pgTableSchema(tablename, conn):
 
     """
     empty_dict = {}
-    tableschema = "public_test" if conn=="newtall" else "public_dev"
+    if "newtall" in conn:
+        tableschema = "public_test"
+    elif "maindev" in conn:
+        tableschema = "public_dev"
+    elif "localpg" in conn:
+        tableschema = "localpg"
+    # tableschema = "public_test" if conn=="newtall" else "public_dev"
     try:
         d = dbc.db(f"{conn}")
         con = d.str

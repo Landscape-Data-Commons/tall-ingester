@@ -12,6 +12,11 @@ import six
 
 
 def schema_chooser(tablename, which=0):
+    """ this function creates a pandas dataframe with a schema excel file. in
+    case there are multiple schema files in the schema directory at the root of
+    the project, you could choose which schema file to load by inputting
+    an index in the which argument. It has a default value of 0 
+    """
     #  PATH TO EXCEL FILE WITH SCHEMA
     schema_dir = json.load(open(file=os.path.normpath(os.path.join(os.getcwd(),"src","utils","config.json") )))["schema_dir"]
 
