@@ -56,6 +56,12 @@ class db:
                 self.str_1 = SimpleConnectionPool(minconn=1,maxconn=10,**self.params)
                 self.str = self.str_1.getconn()
 
+            elif "localhost" in keyword:
+                self.params = config(section='localhost')
+                self.params['options'] = "-c search_path=public_test"
+                self.str_1 = SimpleConnectionPool(minconn=1,maxconn=10,**self.params)
+                self.str = self.str_1.getconn()
+
             else:
                 self.params = config(section=f'{keyword}')
                 self.params['options'] = "-c search_path=public"

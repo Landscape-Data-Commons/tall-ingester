@@ -5,6 +5,7 @@ import re
 import os, os.path
 import pandas as pd
 import logging
+import platform
 
 class Ingester:
 
@@ -42,8 +43,14 @@ class Ingester:
 
                 chunk.to_csv(f, index=False, header=False, sep='\t', na_rep='\\N', quoting=None, encoding="utf-8")
                 f.seek(0)
-                cursor.copy_from(f, f'"{table}"', columns=[f'"{i}"' for i in df.columns])
-                connection.commit()
+                # outside windows, the copy_from function does not requires quotes
+                if platform.system()!="Linux":
+                    print("non-linux format interpolation")
+                    cursor.copy_from(f, f'"{table}"', columns=[f'"{i}"' for i in df.columns])
+                else:
+                    print("linux format interpolation")
+                    cursor.copy_from(f, f'{table}', columns=[f'{i}' for i in df.columns])
+                conn.commit()
         except psycopg2.Error as e:
             print(e)
             conn = connection
