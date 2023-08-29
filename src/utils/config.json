@@ -1,6 +1,6 @@
 {
-  "schema_dir":"C:/Users/kbonefont/OneDrive - USDA/Documents/GitHub/tall-ingester/src/schemas",
-  "tall_dir":"C:/Users/kbonefont/OneDrive - USDA/Documents/GitHub/tall-ingester/talltables",
-  "projects_dir": "C:/Users/kbonefont/OneDrive - USDA/Documents/GitHub/tall-ingester/talltables",
+  "schema_dir":"src/schemas",
+  "tall_dir":"src/talltables",
+  "projects_dir": "src/talltables",
   "local_tif_path": "C:/Users/kbonefont/Downloads/modismerge/modis_merge.tif"
 }

@@ -11,8 +11,10 @@ import src.utils.table_utils as tutils # table_create, todict
 import src.utils.dbconfig as dbc #db
 import src.utils.ingester as ing # Ingester
 
+
 def assemble(tablename):
-    dir = json.load(open(file=os.path.normpath(os.path.join(os.getcwd(),"src","utils","config.json") )))["tall_dir"]
+    predir = json.load(open(file=os.path.normpath(os.path.join(os.getcwd(),"src","utils","config.json") )))["tall_dir"]
+    dir = os.path.join(os.getcwd(),predir)
     tall_files = {
         os.path.splitext(i)[0]:os.path.normpath(f"{dir}/{i}") for
             i in os.listdir(dir) if not i.endswith(".xlsx")
@@ -137,7 +139,10 @@ def assemble(tablename):
             schema = tutils.todict(tablename).keys()
             tempdf = tempdf.filter(schema)
 
-
+        # filtering delete PrimaryKey
+        if "PrimaryKey" in tempdf.columns:
+            tempdf = tempdf[tempdf.PrimaryKey!='Delete']
+            tempdf = tempdf[tempdf.PrimaryKey!='20194937201215B1']
         return tempdf
     else:
         return pd.DataFrame()

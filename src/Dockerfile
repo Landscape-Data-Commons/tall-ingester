@@ -11,17 +11,18 @@ RUN apt-get update && \
             unixodbc-dev \
             libpq-dev \
             g++ \
+            curl \
             default-jre \
             bash -y && \
             pip3 install --upgrade pip
 
 # prepare environment
 WORKDIR /usr/src
-RUN mkdir src
-COPY ./src/requirements.txt ./src
+#RUN mkdir src
+COPY ./src/requirements.txt .
 
 # install python dependencies
-RUN pip3 install --no-cache-dir -r /usr/src/src/requirements.txt
+RUN pip3 install --no-cache-dir -r /usr/src/requirements.txt
 
 #copy application
 COPY / .

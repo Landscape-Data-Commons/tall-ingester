@@ -7,6 +7,15 @@ services:
     stdin_open: true
     tty: true
     container_name: tallingest
+    volumes:
+      - ./talltables:/usr/src/src/talltables
+# rem out if not using a specific docker network for the db
+    networks:
+      - pg-network
+
+networks:
+  pg-network:
+    external: true
 
 # docker-compose build
 # docker-compose run --rm ingester
