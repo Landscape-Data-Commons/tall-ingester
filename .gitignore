@@ -3,5 +3,6 @@
 **/*.ini
 **/*.xlsx
 **/debug.py
+**/debug2.py
 **/*.pyc
 **/*.ipynb
