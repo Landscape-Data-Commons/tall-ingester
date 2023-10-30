@@ -64,7 +64,6 @@ def assemble(tablename):
         tempdf = dateloaded(tempdf)
         tempdf = bitfix(tempdf, scheme)
 
-
         # adding projectkey value
         if "tblProject" not in tablename:
             prj = proj.read_template()
@@ -155,6 +154,8 @@ def bitfix(df, colscheme):
                 # replacing them with None
                 if df[i].isin(['0']).any():
                     df[i] = df[i].apply(lambda x: 0 if (type(x)==str) and ('0' in x) else x)
+                if df[i].isin(['2']).any():
+                    df[i] = df[i].apply(lambda x: 1 if (type(x)==str) and ('2' in x) else x)
                 df[i] = df[i].apply(lambda x: pd.NA if pd.isna(x)==True else x)
                 df[i] = df[i].apply(lambda x: 1 if (type(x)==str) and ("TRUE" in x) else x)
                 df[i] = df[i].apply(lambda x: 0 if (type(x)==str) and ("FALSE" in x) else x)
@@ -165,9 +166,18 @@ def bitfix(df, colscheme):
             elif df[i].isin(['Y','N']).any():
                 if df[i].isin(['0']).any():
                     df[i] = df[i].apply(lambda x: 0 if (type(x)==str) and ('0' in x) else x)
+                if df[i].isin(['2']).any():
+                    df[i] = df[i].apply(lambda x: 1 if (type(x)==str) and ('2' in x) else x)
                 df[i] = df[i].apply(lambda x: pd.NA if pd.isna(x)==True else x)
                 df[i] = df[i].apply(lambda x: 1 if (type(x)==str) and ("Y" in x) else x)
                 df[i] = df[i].apply(lambda x: 0 if (type(x)==str) and ("N" in x) else x)
+                df[i] = df[i].astype('Int64')
+
+            elif df[i].isin(['0','1']).any():
+                df[i] = df[i].apply(lambda x: pd.NA if pd.isna(x)==True else x)
+                df[i] = df[i].apply(lambda x: 1 if (type(x)==str) and ("1" in x) else x)
+                df[i] = df[i].apply(lambda x: 0 if (type(x)==str) and ("0" in x) else x)
+                df[i] = df[i].apply(lambda x: 1 if (type(x)==str) and ('2' in x) else x)
                 df[i] = df[i].astype('Int64')
 
 
@@ -227,7 +237,7 @@ def create_command(tablename):
     currently handles: HEADER, Gap
     """
 
-    str = f'CREATE TABLE "{tablename}" '
+    str = f'CREATE TABLE public_test."{tablename}" '
     str+=field_appender(tablename)
 
     if "Header" in tablename:
@@ -403,7 +413,7 @@ def batcher(schema):
                 if dataframe.empty:
                     print(f"skipping {tablename}")
                 else:
-                    tutils.table_create(tablename, d.str)
+                    tutils.table_create(tablename, d)
                     ing.Ingester.main_ingest(dataframe, tablename, d.str, 10000)
                     print(f" ingested '{tablename}'! (create table route)")
         except Exception as e:

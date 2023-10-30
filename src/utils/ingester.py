@@ -8,6 +8,12 @@ import logging
 import platform
 
 class Ingester:
+    """ class that organizes and sets up methods for
+    ingestion.
+
+    args: connection string
+    ex: ing = Ingester()
+    """
 
     def __init__(self, con):
         """ clearing old instances """

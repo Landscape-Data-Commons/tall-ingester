@@ -2,6 +2,30 @@
 
 Command line application to ingest the tabular contents of "tall" csv files (access databases with an _.mdb_ or _.accdb_ file extension).
 
+### Structure
+
+```
+talltables
+src
+|-- Dockerfile
+|-- LDC_Schemas_2022-04-04-kbf.xlsx
+|-- index.py
+|-- project
+|   `-- project.py
+|-- requirements.txt
+|-- schemas
+`-- utils
+    |-- batchutils.py
+    |-- config.json
+    |-- database.ini
+    |-- dbconfig.py
+    |-- ingester.py
+    |-- schema.py
+    |-- table_utils.py
+    `-- tables.py
+```
+
+
 ## Built with
 
 * Postgresql 14+ database
@@ -45,3 +69,9 @@ docker-compose run --rm ingester
 - This step will execute the containerized application, provided the docker engine is running on the host machine.
 
 ## Usage
+The application has the following commands: ingest, exit.
+1. ingest: runs an ingestion cycle through all the tall csv files contained inside the 'talltables' directory. Requires 2 arguments: ProjectKey,
+ and a boolean that expresses if the cycle should ingest into the development database (True) or the production database (False)
+```sh
+> ingest testprojectkey 3 True # ingest all the tables, append testprojeckey as a projectkey with a 3 day custom daterange into the development database.
+```

@@ -113,3 +113,18 @@ DELETE FROM public_test."dataHeight" a
     COALESCE(a."DBKey", '[NULL]' ) = COALESCE(b."DBKey", '[NULL]' ) AND
     COALESCE(a."DateLoadedInDb", '1999-01-01' ) = COALESCE(b."DateLoadedInDb", '1999-01-01' );
 """
+def counting_rows_dbkey(table, schema, dbkey):
+    init="SELECT "
+    # df = stools.schema_chooser("dataHeight")
+    # col_list = " ".join([f'"{i}",' if (df.Field.to_list().index(i)!=len(df.Field.to_list())-1) else f'"{i}"' for i in df.Field ])
+    init+= '''COUNT(*) FROM {0}."{1}" WHERE "DBKey" = '{2}' '''.format(schema, table, dbkey)
+    # init+= col_list
+    # init+=' ORDER BY count DESC;'
+    return init
+
+def delete_rows_dbkey(table, schema, dbkey):
+    init="DELETE FROM "
+    init+= f'''{schema}."{table}" WHERE "DBKey" = \'{dbkey}\'AND "DateLoadedInDb" = \'2023-04-10\';'''
+    print(init)
+counting_rows_dbkey("dataLPI", "public_test", "REPORT19Apr21RedHillsDIMA5.6asof2022-11-07")
+delete_rows_dbkey("dataLPI", "public_test", "REPORT19Apr21RedHillsDIMA5.6asof2022-11-07")

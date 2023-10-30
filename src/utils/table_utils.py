@@ -6,7 +6,13 @@ import src.utils.dbconfig as dbc
 import src.utils.schema as stools
 import src.utils.tables as tables
 
-def table_create(tablename: str, conn:str=None):
+def schema_adder_create(command, conn):
+    if 'public_test' in conn.params['options']:
+        return command.replace("CREATE TABLE ", "CREATE TABLE public_test.")
+    else:
+        return command.replace("CREATE TABLE ", "CREATE TABLE public_dev.")
+
+def table_create(tablename: str, conn=None):
     """
     pulls all fields from dataframe and constructs a postgres table schema;
     using that schema, create new table in postgres.
@@ -16,7 +22,10 @@ def table_create(tablename: str, conn:str=None):
     try:
         print("checking fields")
         comm = tables.create_command(tablename)
-        con = conn
+        # placing schema before create command
+        # comm = schema_adder_create(comm, conn)
+
+        con = conn.str
         cur = con.cursor()
         # return comm
         cur.execute(comm)
@@ -26,7 +35,7 @@ def table_create(tablename: str, conn:str=None):
     except Exception as e:
         print(e)
         # d = dbc.db('maindev')
-        con = conn
+        con = conn.str
         cur = con.cursor()
 
 def tablecheck(tablename, conn="newtall"):

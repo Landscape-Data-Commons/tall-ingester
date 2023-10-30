@@ -6,3 +6,5 @@
 **/debug2.py
 **/*.pyc
 **/*.ipynb
+**/run_me_ingest.py
+**/*.sql

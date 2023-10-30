@@ -4,8 +4,11 @@ import src.utils.dbconfig as dbc #db
 import src.utils.tables as tbl
 
 def batcher(whichschema):
-
+    """ NOT USED YET 
+    tbl.batcher is currently implemented
+    """
     tablelist = [
+        "dataHeader",
         "dataGap",
         "dataHeight",
         "dataLPI",
@@ -13,6 +16,7 @@ def batcher(whichschema):
         "dataSpeciesInventory",
         "geoIndicators",
         "geoSpecies",
+        "dataHorizontalFlux",
         "tblProject"
         ]
 
@@ -26,6 +30,8 @@ def batcher(whichschema):
             targetschema = "public_dev"
         elif "localpg" in whichschema:
             targetschema = "localpg"
+        elif "localhost" in whichschema:
+            targetschema = "localhost"
         else:
             targetschema = "ingestion to this schema not implemented."
 
