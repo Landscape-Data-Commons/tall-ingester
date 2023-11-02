@@ -183,8 +183,6 @@ def bitfix(df, colscheme):
 
     return df.copy()
 
-
-
 def geoenable(df):
     df.drop(columns=["wkb_geometry"], inplace=True)
     tempdf = gpd.GeoDataFrame(df,
@@ -195,7 +193,6 @@ def geoenable(df):
                     ))
     tempdf.rename(columns={'geometry':'wkb_geometry'}, inplace=True)
     return tempdf
-
 
 def dateloaded(df):
     """ appends DateLoadedInDB and dbkey to the dataframe
@@ -310,7 +307,6 @@ def field_appender(tablename):
             str+= f'"{k}" {v.upper()} );'
     return str
 
-
 def header_fix(str):
     """
     adds primary key constraint
@@ -329,8 +325,6 @@ def nonheader_fix(str):
     fix = str.replace('"PrimaryKey" TEXT,', '"PrimaryKey" TEXT REFERENCES gisdb.public_test."dataHeader"("PrimaryKey"), ')
     return fix
 
-
-
 def project_fix(str):
     """
     adds foreign key contraint
@@ -348,11 +342,8 @@ def rid_adder(str):
     fix = str.replace('" ( ', '" ( rid SERIAL PRIMARY KEY,')
     return fix
 
-
 def height_fix(str):
     fix = str.replace('" ( ', '" ( ri)"')
-
-
 
 def batcher(schema):
 

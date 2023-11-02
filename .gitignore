@@ -7,4 +7,4 @@
 **/*.pyc
 **/*.ipynb
 **/run_me_ingest.py
-**/*.sql
+**/dbkey_drops.sql
