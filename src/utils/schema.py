@@ -10,7 +10,6 @@ import six
 # parse types per table
 # schema_chooser("aero_runs")
 
-
 def schema_chooser(tablename, which=0):
     """ this function creates a pandas dataframe with a schema excel file. in
     case there are multiple schema files in the schema directory at the root of
@@ -24,7 +23,8 @@ def schema_chooser(tablename, which=0):
     schema_list = [
         os.path.normpath(f"{schema_dir}/{i}") for i in os.listdir(schema_dir)
         if "Schema" in i
-        and os.path.splitext(i)[1].endswith(".xlsx")
+        and "LIVE" in i
+        and os.path.splitext(i)[1].endswith(".csv")
         and not i.startswith("~$") ]
 
     if len(schema_list)>1:
@@ -35,7 +35,7 @@ def schema_chooser(tablename, which=0):
         pass
     schema_file = schema_list[which]
     # create dataframe with path
-    excel_dataframe = pd.read_excel(schema_file)
+    excel_dataframe = pd.read_excel(schema_file) if schema_file.endswith(".xlsx") else pd.read_csv(schema_file,encoding='unicode_escape')
     # quick table name fix
     # excel_dataframe['Table'] = excel_dataframe['Table'].apply(lambda x: x.replace('\xa0', ''))
 
@@ -80,7 +80,7 @@ def schemaTableCreate(conn, schemaVer):
 
     """
     tablename = "tblSchema"
-    schema_dir = json.load(open(file=os.path.normpath(os.path.join(os.getcwd(),"src","utils","config.json") )))["schema_dir"]
+    preschema_dir = json.load(open(file=os.path.normpath(os.path.join(os.getcwd(),"src","utils","config.json") )))["schema_dir"]
     schema_dir = os.path.join(os.getcwd(), preschema_dir)
     # SCHEMA PATH LOADER
     schema_list = [
@@ -141,7 +141,7 @@ def schemaTableCreate(conn, schemaVer):
             cur = con.cursor()
             # return comm
             cur.execute(comm)
-            cur.execute(tables.set_srid()) if "Header" in tablename else None
+            cur.execute(tbl.set_srid()) if "Header" in tablename else None
             con.commit()
 
         except Exception as e:

@@ -280,6 +280,18 @@ def create_command(tablename):
         str = nonheader_fix(str)
         str = rid_adder(str)
 
+    elif "PlotCharacterization" in tablename:
+        str = nonheader_fix(str)
+        str = rid_adder(str)
+    
+    elif "SoilHorizons" in tablename:
+        str = nonheader_fix(str)
+        str = rid_adder(str)
+    
+    elif "RHEM" in tablename:
+        str = nonheader_fix(str)
+        str = rid_adder(str)
+
     return str
 
 def set_srid():
@@ -306,6 +318,7 @@ def field_appender(tablename):
         else:
             str+= f'"{k}" {v.upper()} );'
     return str
+
 
 def header_fix(str):
     """
@@ -357,7 +370,10 @@ def batcher(schema):
     "geoIndicators",
     "geoSpecies",
     "dataHorizontalFlux",
-    "tblProject"
+    "tblProject",
+    "tblRHEM",
+    "dataSoilHorizons",
+    "dataPlotCharacterization"
     ]
 
     def filterpks(df,pkunavailable = None):

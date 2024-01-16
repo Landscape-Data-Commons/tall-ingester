@@ -8,3 +8,4 @@
 **/*.ipynb
 **/run_me_ingest.py
 **/dbkey_drops.sql
+**/tables_debug.py
